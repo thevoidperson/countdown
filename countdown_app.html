@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-backdrop {
+            background-color: rgba(0,0,0,0.7);
+        }
+        /* Custom styles for better number input appearance */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* Light mode variables */
+        .light {
+            --bg-color: #f3f4f6;
+            --text-color: #111827;
+            --card-bg-color: #ffffff;
+            --header-bg-color: rgba(255,255,255,0.5);
+            --input-bg-color: #e5e7eb;
+            --border-color: #d1d5db;
+            --primary-text-color: #4f46e5;
+            --secondary-text-color: #6b7280;
+            --button-primary-bg: #4f46e5;
+            --button-primary-hover-bg: #4338ca;
+        }
+        /* Applying variables */
+        body.light { background-color: var(--bg-color); color: var(--text-color); }
+        .light .bg-gray-800 { background-color: var(--card-bg-color); }
+        .light .bg-gray-800\/50 { background-color: var(--header-bg-color); }
+        .light .bg-gray-700, .light .bg-gray-700\/50, .light .bg-gray-900\/50 { background-color: var(--input-bg-color); }
+        .light .text-white { color: var(--text-color); }
+        .light .text-indigo-400 { color: var(--primary-text-color); }
+        .light .text-gray-400, .light .text-gray-300, .light .text-gray-500 { color: var(--secondary-text-color); }
+        .light .border-gray-600 { border-color: var(--border-color); }
+        .light .bg-indigo-600 { background-color: var(--button-primary-bg); }
+        .light .bg-indigo-700 { background-color: var(--button-primary-hover-bg); }
+        .light .bg-gray-600 { background-color: #d1d5db; color: #111827 }
+        .light .bg-gray-700 { background-color: #e5e7eb; }
+
+        /* Light theme overrides for quiz overview colors */
+        .light .bg-green-800\/30 { background-color: #dcfce7; /* green-100 */ }
+        .light .text-green-400 { color: #16a34a; /* green-600 */ }
+        .light .bg-red-800\/30 { background-color: #fee2e2; /* red-100 */ }
+        .light .text-red-400 { color: #dc2626; /* red-600 */ }
+
+        /* Light theme overrides for difficulty buttons */
+        .light #easy-btn { background-color: #16a34a; color: white; } /* green-600 */
+        .light #easy-btn:hover { background-color: #15803d; } /* green-700 */
+        .light #medium-btn { background-color: #f59e0b; color: white; } /* amber-500 */
+        .light #medium-btn:hover { background-color: #d97706; } /* amber-600 */
+        .light #hell-btn { background-color: #dc2626; color: white; } /* red-600 */
+        .light #hell-btn:hover { background-color: #b91c1c; } /* red-700 */
+
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen">
+
+    <div id="app-container" class="w-full h-full sm:h-auto sm:max-w-md lg:max-w-lg mx-auto sm:p-4 flex flex-col">
+
+        <!-- Profile Creation/Load Screen -->
+        <div id="profile-screen" class="bg-gray-800 sm:rounded-xl shadow-2xl p-6 sm:p-8 text-center flex flex-col justify-center flex-grow">
+            <h1 class="text-3xl sm:text-4xl font-bold text-indigo-400 mb-4">Welcome!</h1>
+            <p class="text-gray-400 mb-6">Create a new profile or load your data.</p>
+            <div class="space-y-4">
+                <input type="text" id="username-input" placeholder="Enter Your Username" class="w-full bg-gray-700 border-2 border-gray-600 focus:border-indigo-500 text-white text-base sm:text-lg rounded-lg p-3 text-center outline-none transition duration-300">
+                <button id="new-player-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300">Start as New Player</button>
+                <button id="show-load-modal-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300">Load Profile Data</button>
+                 <p id="profile-error" class="text-red-400 text-sm h-4"></p>
+            </div>
+        </div>
+
+        <!-- Main App Content (hidden until profile is loaded) -->
+        <div id="main-app" class="hidden flex flex-col flex-grow">
+            <!-- Profile Header -->
+            <div id="profile-header" class="relative mb-4 p-4 bg-gray-800/50 sm:rounded-lg text-center">
+                <div class="absolute top-4 left-4 flex space-x-2">
+                    <button id="show-profile-btn" class="text-gray-400 hover:text-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </button>
+                </div>
+                 <div class="absolute top-4 right-4">
+                    <button id="show-settings-btn" class="text-gray-400 hover:text-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </button>
+                </div>
+                 <h2 class="text-xl sm:text-2xl font-bold text-indigo-400" id="profile-username"></h2>
+                 <div class="flex justify-around mt-2 text-gray-300">
+                    <div>
+                        <p class="text-xs sm:text-sm uppercase text-gray-500">High Score</p>
+                        <p id="profile-highscore" class="text-base sm:text-lg font-semibold">0%</p>
+                    </div>
+                    <div>
+                        <p class="text-xs sm:text-sm uppercase text-gray-500">Quizzes Played</p>
+                        <p id="profile-quizzes" class="text-base sm:text-lg font-semibold">0</p>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Difficulty Screen -->
+            <div id="difficulty-screen" class="bg-gray-800 sm:rounded-xl shadow-2xl p-6 sm:p-8 text-center flex flex-col justify-center flex-grow">
+                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-400 mb-2">Select Difficulty</h1>
+                <p class="text-gray-400 mb-8">Choose your challenge level.</p>
+                <div class="space-y-4">
+                    <button id="easy-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Easy
+                    </button>
+                    <button id="medium-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Medium
+                    </button>
+                    <button id="hell-btn" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        HELL
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Mode Screen -->
+            <div id="mode-screen" class="hidden bg-gray-800 sm:rounded-xl shadow-2xl p-6 sm:p-8 text-center flex flex-col justify-center flex-grow">
+                <h1 class="text-3xl sm:text-4xl font-bold text-indigo-400 mb-2">Select Mode</h1>
+                <p class="text-gray-400 mb-8">How do you want to play?</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="classic-mode-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Classic
+                        <span class="block text-xs opacity-75">(10 Questions, Timed)</span>
+                    </button>
+                    <button id="mc-mode-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Multiple Choice
+                        <span class="block text-xs opacity-75">(10 Questions, Timed)</span>
+                    </button>
+                    <button id="sudden-death-mode-btn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Sudden Death
+                        <span class="block text-xs opacity-75">(Play Till You Miss)</span>
+                    </button>
+                    <button id="zen-mode-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                        Zen Mode
+                        <span class="block text-xs opacity-75">(Unlimited, No Timer)</span>
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Quiz Screen -->
+            <div id="quiz-screen" class="hidden bg-gray-800 sm:rounded-xl shadow-2xl p-6 sm:p-8 flex flex-col justify-center flex-grow">
+                 <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <span id="question-counter" class="text-indigo-400 font-semibold text-sm sm:text-base"></span>
+                    </div>
+                    <div class="flex items-center space-x-2 sm:space-x-4">
+                        <span id="timer" class="text-base sm:text-xl font-mono bg-gray-700 px-2 sm:px-3 py-1 rounded-md w-24 sm:w-28 text-center">00:00:00</span>
+                        <span id="error-display" class="text-base sm:text-xl font-mono text-red-400 bg-red-900/50 px-2 sm:px-3 py-1 rounded-md">Errors: 0</span>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <p id="question-text" class="text-4xl sm:text-5xl font-bold text-center text-white bg-gray-700/50 rounded-lg py-8 sm:py-12"></p>
+                </div>
+                <div id="classic-mode-container" class="flex flex-col space-y-4">
+                    <input type="number" id="answer-input" step="any" placeholder="Your answer..." class="w-full bg-gray-700 border-2 border-gray-600 focus:border-indigo-500 text-white text-xl sm:text-2xl rounded-lg p-4 text-center outline-none transition duration-300">
+                    <button id="submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">Submit</button>
+                </div>
+                <div id="mc-mode-container" class="hidden grid grid-cols-2 gap-4">
+                    <button class="mc-option w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 sm:py-4 px-2 rounded-lg text-xl sm:text-2xl transition duration-300 transform hover:scale-105"></button>
+                    <button class="mc-option w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 sm:py-4 px-2 rounded-lg text-xl sm:text-2xl transition duration-300 transform hover:scale-105"></button>
+                    <button class="mc-option w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 sm:py-4 px-2 rounded-lg text-xl sm:text-2xl transition duration-300 transform hover:scale-105"></button>
+                    <button class="mc-option w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 sm:py-4 px-2 rounded-lg text-xl sm:text-2xl transition duration-300 transform hover:scale-105"></button>
+                </div>
+                <button id="end-zen-btn" class="hidden w-full mt-4 bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg transition duration-300">End Zen Session</button>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results-screen" class="hidden bg-gray-800 sm:rounded-xl shadow-2xl p-6 sm:p-8 text-center flex flex-col justify-center flex-grow">
+                <h2 class="text-3xl sm:text-4xl font-bold text-indigo-400 mb-4">Quiz Complete!</h2>
+                
+                <!-- Classic / MC Results -->
+                <div id="standard-results">
+                    <div class="grid grid-cols-2 gap-4 my-8 text-xl sm:text-2xl">
+                        <div class="bg-gray-700/50 p-4 rounded-lg">
+                            <p class="text-xs sm:text-sm text-gray-400 uppercase">Time</p>
+                            <p id="final-time" class="font-bold"></p>
+                        </div>
+                        <div class="bg-gray-700/50 p-4 rounded-lg">
+                            <p class="text-xs sm:text-sm text-gray-400 uppercase">Errors</p>
+                            <p id="final-errors" class="font-bold"></p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700/50 p-6 rounded-lg mb-8">
+                         <p class="text-base sm:text-lg text-gray-400 uppercase">Final Score</p>
+                         <p id="final-score" class="text-4xl sm:text-5xl font-bold text-green-400"></p>
+                    </div>
+                </div>
+
+                <!-- Sudden Death Results -->
+                <div id="sudden-death-results" class="hidden my-8">
+                     <p class="text-base sm:text-lg text-gray-400 uppercase">Final Streak</p>
+                     <p id="final-streak" class="text-5xl sm:text-6xl font-bold text-amber-400 p-6"></p>
+                </div>
+
+                <!-- Zen Results -->
+                <div id="zen-results" class="hidden my-8">
+                    <div class="grid grid-cols-2 gap-4 text-xl sm:text-2xl">
+                        <div class="bg-gray-700/50 p-4 rounded-lg">
+                            <p class="text-xs sm:text-sm text-gray-400 uppercase">Correct</p>
+                            <p id="zen-correct" class="font-bold text-green-400"></p>
+                        </div>
+                        <div class="bg-gray-700/50 p-4 rounded-lg">
+                            <p class="text-xs sm:text-sm text-gray-400 uppercase">Incorrect</p>
+                            <p id="zen-incorrect" class="font-bold text-red-400"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="restart-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg text-base sm:text-lg transition duration-300 transform hover:scale-105">
+                    Play Again
+                </button>
+                 <div id="overview-container" class="mt-8 text-left">
+                    <h3 class="text-xl sm:text-2xl font-bold text-indigo-400 mb-4 text-center">Quiz Overview</h3>
+                    <div id="overview-list" class="space-y-3 max-h-60 overflow-y-auto p-2 bg-gray-900/50 rounded-lg"></div>
+                </div>
+                <!-- Save Data Section -->
+                <div id="save-data-container" class="mt-8 text-left">
+                    <h3 class="text-xl sm:text-2xl font-bold text-indigo-400 mb-4 text-center">Your Profile Save Code</h3>
+                    <p class="text-sm text-gray-400 text-center mb-2">Copy this code to load your progress next time.</p>
+                    <textarea id="save-data-output" rows="3" readonly class="w-full bg-gray-900/50 rounded-lg p-2 font-mono text-xs text-gray-300 resize-none"></textarea>
+                    <button id="copy-code-btn" class="w-full mt-2 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg text-sm transition duration-300">Copy Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="load-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 sm:p-8 text-center w-full max-w-lg mx-4">
+            <h2 class="text-xl sm:text-2xl font-bold text-indigo-400 mb-4">Load Profile Data</h2>
+            <p class="text-gray-400 mb-4">Paste your save code below.</p>
+            <textarea id="load-data-input" rows="4" class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg p-3 font-mono text-sm text-white resize-none outline-none focus:border-indigo-500"></textarea>
+            <div class="flex justify-end gap-4 mt-4">
+                <button class="modal-close-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Cancel</button>
+                <button id="confirm-load-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Load</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="profile-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-lg mx-4 flex flex-col">
+            <h2 class="text-xl sm:text-2xl font-bold text-indigo-400 mb-4 text-center">Quiz History</h2>
+            <div id="history-list" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                <!-- History items will be injected here -->
+            </div>
+             <div class="flex justify-between items-center mt-6">
+                <button id="logout-btn" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Logout</button>
+                <button class="modal-close-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+        <div class="bg-gray-800 rounded-xl shadow-2xl p-6 sm:p-8 w-full max-w-lg mx-4">
+            <h2 class="text-xl sm:text-2xl font-bold text-indigo-400 mb-6 text-center">Settings</h2>
+            <div class="space-y-6">
+                <div>
+                    <label for="change-username-input" class="block mb-2 text-sm font-medium text-gray-400">Change Username</label>
+                    <input type="text" id="change-username-input" class="w-full bg-gray-700 border-2 border-gray-600 focus:border-indigo-500 text-white text-base rounded-lg p-3 outline-none transition duration-300">
+                </div>
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-400">Theme</label>
+                    <div class="flex space-x-4">
+                        <button id="theme-dark-btn" class="flex-1 bg-gray-700 text-white font-bold py-2 px-4 rounded-lg border-2 border-transparent">Dark</button>
+                        <button id="theme-light-btn" class="flex-1 bg-gray-200 text-black font-bold py-2 px-4 rounded-lg border-2 border-transparent">Light</button>
+                    </div>
+                </div>
+            </div>
+             <div class="flex justify-end gap-4 mt-8">
+                <button class="modal-close-btn bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Cancel</button>
+                <button id="save-settings-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">Save</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- UI Elements ---
+        const body = document.body;
+        const appContainer = document.getElementById('app-container');
+        const profileScreen = document.getElementById('profile-screen');
+        const mainApp = document.getElementById('main-app');
+        
+        const usernameInput = document.getElementById('username-input');
+        const newPlayerBtn = document.getElementById('new-player-btn');
+        const showLoadModalBtn = document.getElementById('show-load-modal-btn');
+        const profileError = document.getElementById('profile-error');
+
+        const loadModal = document.getElementById('load-modal');
+        const loadDataInput = document.getElementById('load-data-input');
+        const confirmLoadBtn = document.getElementById('confirm-load-btn');
+        
+        const profileModal = document.getElementById('profile-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const showProfileBtn = document.getElementById('show-profile-btn');
+        const showSettingsBtn = document.getElementById('show-settings-btn');
+        const historyList = document.getElementById('history-list');
+        const changeUsernameInput = document.getElementById('change-username-input');
+        const themeDarkBtn = document.getElementById('theme-dark-btn');
+        const themeLightBtn = document.getElementById('theme-light-btn');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        const profileHeader = document.getElementById('profile-header');
+        const profileUsername = document.getElementById('profile-username');
+        const profileHighscore = document.getElementById('profile-highscore');
+        const profileQuizzes = document.getElementById('profile-quizzes');
+        
+        const difficultyScreen = document.getElementById('difficulty-screen');
+        const easyBtn = document.getElementById('easy-btn');
+        const mediumBtn = document.getElementById('medium-btn');
+        const hellBtn = document.getElementById('hell-btn');
+        
+        const modeScreen = document.getElementById('mode-screen');
+        const classicModeBtn = document.getElementById('classic-mode-btn');
+        const mcModeBtn = document.getElementById('mc-mode-btn');
+        const suddenDeathModeBtn = document.getElementById('sudden-death-mode-btn');
+        const zenModeBtn = document.getElementById('zen-mode-btn');
+
+        const quizScreen = document.getElementById('quiz-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        
+        const submitBtn = document.getElementById('submit-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        const endZenBtn = document.getElementById('end-zen-btn');
+        const classicModeContainer = document.getElementById('classic-mode-container');
+        const mcModeContainer = document.getElementById('mc-mode-container');
+        const mcOptions = document.querySelectorAll('.mc-option');
+        
+        const questionCounter = document.getElementById('question-counter');
+        const timerEl = document.getElementById('timer');
+        const errorDisplay = document.getElementById('error-display');
+        const questionText = document.getElementById('question-text');
+        const answerInput = document.getElementById('answer-input');
+        
+        const standardResults = document.getElementById('standard-results');
+        const suddenDeathResults = document.getElementById('sudden-death-results');
+        const zenResults = document.getElementById('zen-results');
+        const finalTime = document.getElementById('final-time');
+        const finalErrors = document.getElementById('final-errors');
+        const finalScore = document.getElementById('final-score');
+        const finalStreak = document.getElementById('final-streak');
+        const zenCorrect = document.getElementById('zen-correct');
+        const zenIncorrect = document.getElementById('zen-incorrect');
+        const overviewList = document.getElementById('overview-list');
+
+        const saveDataOutput = document.getElementById('save-data-output');
+        const copyCodeBtn = document.getElementById('copy-code-btn');
+        
+        const allCloseBtns = document.querySelectorAll('.modal-close-btn');
+
+        // --- Game State ---
+        const TOTAL_QUESTIONS = 10;
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let errorCount = 0;
+        let timerInterval;
+        let startTime;
+        let gameMode = ''; 
+        let difficultyLevel = '';
+        let playerData = null;
+        let tempTheme = 'dark';
+        let suddenDeathScore = 0;
+        let zenCorrectCount = 0;
+        let zenIncorrectCount = 0;
+
+        // --- Event Listeners ---
+        newPlayerBtn.addEventListener('click', () => {
+            const username = usernameInput.value.trim();
+            if (username) {
+                initializeNewPlayer(username);
+                profileError.textContent = '';
+            } else {
+                profileError.textContent = 'Please enter a username.';
+            }
+        });
+        showLoadModalBtn.addEventListener('click', () => loadModal.classList.remove('hidden'));
+        confirmLoadBtn.addEventListener('click', () => {
+            const code = loadDataInput.value.trim();
+            if(code) {
+                loadProfileData(code);
+            }
+        });
+        
+        showProfileBtn.addEventListener('click', showProfileModal);
+        showSettingsBtn.addEventListener('click', showSettingsModal);
+        logoutBtn.addEventListener('click', logout);
+        
+        allCloseBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.closest('.modal-backdrop').classList.add('hidden');
+            });
+        });
+        
+        themeDarkBtn.addEventListener('click', () => selectTheme('dark'));
+        themeLightBtn.addEventListener('click', () => selectTheme('light'));
+        saveSettingsBtn.addEventListener('click', saveSettings);
+        
+        easyBtn.addEventListener('click', () => setDifficulty('easy'));
+        mediumBtn.addEventListener('click', () => setDifficulty('medium'));
+        hellBtn.addEventListener('click', () => setDifficulty('hell'));
+
+        classicModeBtn.addEventListener('click', () => {
+            gameMode = 'classic';
+            modeScreen.classList.add('hidden');
+            startQuiz();
+        });
+        mcModeBtn.addEventListener('click', () => {
+            gameMode = 'multipleChoice';
+            modeScreen.classList.add('hidden');
+            startQuiz();
+        });
+        suddenDeathModeBtn.addEventListener('click', () => {
+            gameMode = 'suddenDeath';
+            modeScreen.classList.add('hidden');
+            startQuiz();
+        });
+        zenModeBtn.addEventListener('click', () => {
+            gameMode = 'zen';
+            modeScreen.classList.add('hidden');
+            startQuiz();
+        });
+
+        submitBtn.addEventListener('click', () => {
+             const userAnswerRaw = answerInput.value;
+             if (userAnswerRaw !== '') submitAnswer(parseFloat(userAnswerRaw), userAnswerRaw);
+        });
+        restartBtn.addEventListener('click', () => {
+            resultsScreen.classList.add('hidden');
+            difficultyScreen.classList.remove('hidden');
+        });
+        endZenBtn.addEventListener('click', showResults);
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const userAnswerRaw = answerInput.value;
+                if (userAnswerRaw !== '') submitAnswer(parseFloat(userAnswerRaw), userAnswerRaw);
+            }
+        });
+        mcOptions.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const choice = e.target.textContent;
+                submitAnswer(parseFloat(choice), choice);
+            });
+        });
+        copyCodeBtn.addEventListener('click', copySaveCode);
+
+        // --- Profile & Data Functions ---
+        function initializeNewPlayer(username) {
+            playerData = {
+                username: username,
+                stats: {
+                    highScore: 0,
+                    quizzesPlayed: 0,
+                },
+                history: [], 
+                settings: {
+                    theme: 'dark'
+                }
+            };
+            applyTheme();
+            enterMainApp();
+        }
+
+        function loadProfileData(saveCode) {
+            try {
+                const jsonString = atob(saveCode);
+                const loadedData = JSON.parse(jsonString);
+                if (loadedData.username && loadedData.stats && loadedData.history) {
+                    playerData = loadedData;
+                    if (!playerData.settings) { // Backwards compatibility for old saves
+                        playerData.settings = { theme: 'dark' };
+                    }
+                    loadModal.classList.add('hidden');
+                    loadDataInput.value = '';
+                    applyTheme();
+                    enterMainApp();
+                } else {
+                    alert('Invalid or corrupted save code.');
+                }
+            } catch (error) {
+                console.error("Failed to load profile data:", error);
+                alert('Invalid or corrupted save code.');
+            }
+        }
+        
+        function enterMainApp() {
+            profileScreen.classList.add('hidden');
+            mainApp.classList.remove('hidden');
+            difficultyScreen.classList.remove('hidden');
+            updateProfileHeader();
+        }
+
+        function updateProfileHeader() {
+            if (!playerData) return;
+            profileUsername.textContent = playerData.username;
+            profileHighscore.textContent = `${playerData.stats.highScore}%`;
+            profileQuizzes.textContent = playerData.stats.quizzesPlayed;
+        }
+        
+        function updateAndSaveQuizResult(resultData) {
+            if (!playerData) return;
+            playerData.stats.quizzesPlayed++;
+
+            if (resultData.type === 'standard' && resultData.score > playerData.stats.highScore) {
+                playerData.stats.highScore = resultData.score;
+            }
+            
+            const historyEntry = { 
+                ...resultData, 
+                date: new Date().toISOString(), 
+                difficulty: difficultyLevel, 
+                mode: gameMode 
+            };
+            
+            playerData.history.unshift(historyEntry);
+            if (playerData.history.length > 10) {
+                playerData.history.pop();
+            }
+            generateSaveCode();
+            updateProfileHeader();
+        }
+        
+        function generateSaveCode() {
+            if (!playerData) return;
+            const jsonString = JSON.stringify(playerData);
+            const saveCode = btoa(jsonString);
+            saveDataOutput.value = saveCode;
+        }
+
+        function copySaveCode() {
+            saveDataOutput.select();
+            document.execCommand('copy');
+            copyCodeBtn.textContent = 'Copied!';
+            setTimeout(() => { copyCodeBtn.textContent = 'Copy Code'; }, 2000);
+        }
+        
+        function logout() {
+            playerData = null;
+            mainApp.classList.add('hidden');
+            profileModal.classList.add('hidden');
+            settingsModal.classList.add('hidden');
+            profileScreen.classList.remove('hidden');
+            usernameInput.value = '';
+        }
+
+        // --- Modals and Settings Functions ---
+        function showProfileModal() {
+            historyList.innerHTML = ''; // Clear previous list
+            if (playerData.history.length === 0) {
+                historyList.innerHTML = `<p class="text-center text-gray-400">No quizzes played yet.</p>`;
+            } else {
+                playerData.history.forEach(quiz => {
+                    const item = document.createElement('div');
+                    item.className = 'bg-gray-700/50 p-4 rounded-lg';
+                    const quizDate = new Date(quiz.date).toLocaleDateString();
+                    
+                    let scoreDisplay = '';
+                    if (quiz.type === 'standard') {
+                        scoreDisplay = `<p class="text-xl font-bold ${quiz.score >= 80 ? 'text-green-400' : 'text-yellow-400'}">${quiz.score}%</p>
+                                      <p class="text-sm text-gray-400">${quiz.time}</p>`;
+                    } else if (quiz.type === 'suddenDeath') {
+                        scoreDisplay = `<p class="text-xl font-bold text-amber-400">${quiz.streak} Streak</p>
+                                      <p class="text-sm text-gray-400">${quiz.time}</p>`;
+                    } else if (quiz.type === 'zen') {
+                        scoreDisplay = `<p class="text-lg font-bold text-sky-400">Correct: ${quiz.correct}</p>
+                                      <p class="text-sm text-gray-400">Incorrect: ${quiz.incorrect}</p>`;
+                    }
+
+                    item.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold capitalize text-white">${quiz.difficulty} - ${getModeDisplayName(quiz.mode)}</p>
+                                <p class="text-sm text-gray-400">${quizDate}</p>
+                            </div>
+                            <div class="text-right">
+                                ${scoreDisplay}
+                            </div>
+                        </div>
+                    `;
+                    historyList.appendChild(item);
+                });
+            }
+            profileModal.classList.remove('hidden');
+        }
+        
+        function getModeDisplayName(mode) {
+            switch(mode) {
+                case 'classic': return 'Classic';
+                case 'multipleChoice': return 'MC';
+                case 'suddenDeath': return 'Sudden Death';
+                case 'zen': return 'Zen';
+                default: return 'Quiz';
+            }
+        }
+
+        function showSettingsModal() {
+            changeUsernameInput.value = playerData.username;
+            tempTheme = playerData.settings.theme;
+            updateThemeSelectionUI();
+            settingsModal.classList.remove('hidden');
+        }
+        
+        function selectTheme(theme) {
+            tempTheme = theme;
+            updateThemeSelectionUI();
+        }
+
+        function updateThemeSelectionUI() {
+            if (tempTheme === 'dark') {
+                themeDarkBtn.classList.add('border-indigo-500');
+                themeLightBtn.classList.remove('border-indigo-500');
+            } else {
+                themeLightBtn.classList.add('border-indigo-500');
+                themeDarkBtn.classList.remove('border-indigo-500');
+            }
+        }
+        
+        function applyTheme() {
+            if (playerData.settings.theme === 'light') {
+                body.classList.add('light');
+            } else {
+                body.classList.remove('light');
+            }
+        }
+
+        function saveSettings() {
+            const newUsername = changeUsernameInput.value.trim();
+            if (newUsername) {
+                playerData.username = newUsername;
+            }
+            playerData.settings.theme = tempTheme;
+            applyTheme();
+            updateProfileHeader();
+            settingsModal.classList.add('hidden');
+        }
+
+        // --- Core Game Functions ---
+        function setDifficulty(level) {
+            difficultyLevel = level;
+            difficultyScreen.classList.add('hidden');
+            modeScreen.classList.remove('hidden');
+        }
+
+        function startQuiz() {
+            // Reset common elements
+            classicModeContainer.classList.add('hidden');
+            mcModeContainer.classList.add('hidden');
+            errorDisplay.classList.remove('hidden');
+            timerEl.classList.remove('hidden');
+            endZenBtn.classList.add('hidden');
+            
+            // Set mode-specific UI
+            if (gameMode === 'classic') {
+                classicModeContainer.classList.remove('hidden');
+            } else if (gameMode === 'multipleChoice') {
+                mcModeContainer.classList.remove('hidden');
+            } else if (gameMode === 'suddenDeath') {
+                classicModeContainer.classList.remove('hidden'); // Sudden death uses classic input
+                errorDisplay.classList.add('hidden');
+            } else if (gameMode === 'zen') {
+                classicModeContainer.classList.remove('hidden'); // Zen uses classic input
+                timerEl.classList.add('hidden');
+                endZenBtn.classList.remove('hidden');
+            }
+            
+            questions = [];
+            currentQuestionIndex = 0;
+            errorCount = 0;
+            suddenDeathScore = 0;
+            zenCorrectCount = 0;
+            zenIncorrectCount = 0;
+            errorDisplay.textContent = `Errors: 0`;
+
+            if (gameMode !== 'suddenDeath' && gameMode !== 'zen') {
+                generateAllQuestions();
+            } else {
+                questions.push(generateQuestion());
+            }
+
+            quizScreen.classList.remove('hidden');
+            displayQuestion();
+            if (gameMode !== 'zen') {
+                startTimer();
+            }
+        }
+
+        function showResults() {
+            clearInterval(timerInterval);
+            quizScreen.classList.add('hidden');
+            resultsScreen.classList.remove('hidden');
+
+            // Hide all result blocks first
+            standardResults.classList.add('hidden');
+            suddenDeathResults.classList.add('hidden');
+            zenResults.classList.add('hidden');
+            overviewList.parentElement.classList.remove('hidden');
+
+            const timeTaken = new Date() - startTime;
+            const timeString = formatTime(timeTaken);
+
+            if (gameMode === 'classic' || gameMode === 'multipleChoice') {
+                standardResults.classList.remove('hidden');
+                finalTime.textContent = timeString;
+                finalErrors.textContent = errorCount;
+                const correctAnswers = TOTAL_QUESTIONS - errorCount;
+                const score = Math.round((correctAnswers / TOTAL_QUESTIONS) * 100);
+                finalScore.textContent = `${score}%`;
+                populateOverview();
+                updateAndSaveQuizResult({ type: 'standard', score, time: timeString, errors: errorCount });
+            } else if (gameMode === 'suddenDeath') {
+                suddenDeathResults.classList.remove('hidden');
+                finalStreak.textContent = suddenDeathScore;
+                overviewList.parentElement.classList.add('hidden'); // No overview for this mode
+                updateAndSaveQuizResult({ type: 'suddenDeath', streak: suddenDeathScore, time: timeString });
+            } else if (gameMode === 'zen') {
+                zenResults.classList.remove('hidden');
+                zenCorrect.textContent = zenCorrectCount;
+                zenIncorrect.textContent = zenIncorrectCount;
+                populateOverview();
+                updateAndSaveQuizResult({ type: 'zen', correct: zenCorrectCount, incorrect: zenIncorrectCount });
+            }
+        }
+        
+        function displayQuestion() {
+            const isSuddenDeath = gameMode === 'suddenDeath';
+            if (gameMode !== 'suddenDeath' && gameMode !== 'zen' && currentQuestionIndex >= TOTAL_QUESTIONS) {
+                showResults();
+                return;
+            }
+
+            const q = questions[currentQuestionIndex];
+            questionText.textContent = q.question;
+            
+            if (isSuddenDeath) {
+                questionCounter.textContent = `Streak: ${suddenDeathScore}`;
+            } else if (gameMode === 'zen') {
+                questionCounter.textContent = `Correct: ${zenCorrectCount}`;
+                errorDisplay.textContent = `Incorrect: ${zenIncorrectCount}`;
+            } else {
+                questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${TOTAL_QUESTIONS}`;
+            }
+
+            if (gameMode === 'classic' || isSuddenDeath || gameMode === 'zen') {
+                answerInput.value = '';
+                answerInput.focus();
+            } else { // Multiple Choice
+                displayChoices(q);
+            }
+        }
+        function displayChoices(questionData) {
+            const choices = generateChoices(questionData.answer);
+            mcOptions.forEach((button, index) => {
+                button.textContent = choices[index];
+            });
+        }
+        function submitAnswer(userAnswer, userAnswerRaw) {
+            const correctAnswer = questions[currentQuestionIndex].answer;
+            const isCorrect = Math.abs(userAnswer - correctAnswer) < 0.001;
+
+            if (gameMode === 'suddenDeath') {
+                if (isCorrect) {
+                    suddenDeathScore++;
+                    questions = [generateQuestion()]; // Generate a new question
+                    currentQuestionIndex = 0;
+                    displayQuestion();
+                } else {
+                    showResults();
+                }
+                return;
+            }
+
+            if (gameMode === 'zen') {
+                questions[currentQuestionIndex].userAnswer = userAnswerRaw === '' ? 'No Answer' : userAnswerRaw;
+                if (isCorrect) {
+                    zenCorrectCount++;
+                } else {
+                    zenIncorrectCount++;
+                }
+                questions = [generateQuestion()];
+                currentQuestionIndex = 0;
+                displayQuestion();
+                return;
+            }
+
+            questions[currentQuestionIndex].userAnswer = userAnswerRaw === '' ? 'No Answer' : userAnswerRaw;
+            if (!isCorrect) {
+                errorCount++;
+                errorDisplay.textContent = `Errors: ${errorCount}`;
+            }
+            currentQuestionIndex++;
+            displayQuestion();
+        }
+        function populateOverview() {
+            overviewList.innerHTML = '';
+            questions.forEach((q, index) => {
+                const isCorrect = Math.abs(parseFloat(q.userAnswer) - q.answer) < 0.001;
+                const resultItem = document.createElement('div');
+                resultItem.className = `p-3 rounded-lg flex justify-between items-center ${isCorrect ? 'bg-green-800/30' : 'bg-red-800/30'}`;
+                resultItem.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-sm font-bold text-gray-400 mr-3">${index + 1}.</span>
+                        <span class="text-gray-300 text-lg">${q.question.replace(' = ?', '')}</span>
+                    </div>
+                    <div>
+                        <span class="font-mono ${isCorrect ? 'text-green-400' : 'text-red-400'}">${q.userAnswer}</span>
+                        ${!isCorrect ? `<span class="font-mono text-green-400 ml-3">(was ${q.answer})</span>` : ''}
+                    </div>
+                `;
+                overviewList.appendChild(resultItem);
+            });
+        }
+        function startTimer() {
+            startTime = new Date();
+            timerInterval = setInterval(() => {
+                const elapsedTime = new Date() - startTime;
+                timerEl.textContent = formatTime(elapsedTime);
+            }, 51);
+        }
+        function formatTime(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            const ms = Math.floor((milliseconds % 1000) / 10);
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${ms.toString().padStart(2, '0')}`;
+        }
+        function generateAllQuestions() {
+            questions = [];
+            for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+                questions.push(generateQuestion());
+            }
+        }
+        function generateChoices(correctAnswer) {
+            let choices = [correctAnswer];
+            const decimalPlaces = (correctAnswer.toString().split('.')[1] || '').length;
+            while (choices.length < 4) {
+                let distractor;
+                const variation = (Math.random() * 5 + 1).toFixed(decimalPlaces);
+                if (Math.random() > 0.5) {
+                    distractor = parseFloat((correctAnswer + parseFloat(variation)).toFixed(decimalPlaces));
+                } else {
+                    distractor = parseFloat((correctAnswer - parseFloat(variation)).toFixed(decimalPlaces));
+                    if (distractor < 0 && correctAnswer > 0) distractor = correctAnswer + 1; // Avoid negative distractors unless answer is negative
+                }
+
+                if (!choices.includes(distractor) && distractor !== correctAnswer) {
+                    choices.push(distractor);
+                }
+            }
+            // Shuffle
+            for (let i = choices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [choices[i], choices[j]] = [choices[j], choices[i]];
+            }
+            return choices;
+        }
+
+        function generateQuestion() {
+            const operations = ['+', '-', '*', '/'];
+            const operation = operations[Math.floor(Math.random() * operations.length)];
+            let num1, num2, question, answer;
+
+            switch (difficultyLevel) {
+                case 'easy':
+                    switch (operation) {
+                        case '+':
+                            num1 = getRandomInt(1, 50);
+                            num2 = getRandomInt(1, 50);
+                            answer = num1 + num2;
+                            break;
+                        case '-':
+                            num1 = getRandomInt(50, 100);
+                            num2 = getRandomInt(1, 49);
+                            answer = num1 - num2;
+                            break;
+                        case '*':
+                            num1 = getRandomInt(2, 10);
+                            num2 = getRandomInt(2, 10);
+                            answer = num1 * num2;
+                            break;
+                        case '/':
+                            answer = getRandomInt(2, 10);
+                            num2 = getRandomInt(2, 10);
+                            num1 = answer * num2;
+                            break;
+                    }
+                    question = `${num1} ${operation} ${num2} = ?`;
+                    break;
+
+                case 'medium':
+                     switch (operation) {
+                        case '+':
+                            num1 = getRandomFloat(1, 150, 1);
+                            num2 = getRandomFloat(1, 150, 1);
+                            answer = parseFloat((num1 + num2).toFixed(1));
+                            break;
+                        case '-':
+                            let a = getRandomFloat(1, 150, 1);
+                            let b = getRandomFloat(1, 150, 1);
+                            num1 = Math.max(a, b);
+                            num2 = Math.min(a, b);
+                            answer = parseFloat((num1 - num2).toFixed(1));
+                            break;
+                        case '*':
+                            num1 = getRandomInt(2, 25);
+                            num2 = getRandomInt(2, 10) + (Math.random() > 0.5 ? 0.5 : 0.1);
+                            if (Math.random() > 0.5) [num1, num2] = [num2, num1];
+                            answer = parseFloat((num1 * num2).toFixed(2));
+                            break;
+                        case '/':
+                            answer = getRandomInt(5, 25);
+                            num2 = getRandomInt(3, 15);
+                            num1 = answer * num2;
+                            break;
+                    }
+                    question = `${num1} ${operation} ${num2} = ?`;
+                    break;
+
+                case 'hell':
+                    switch (operation) {
+                        case '+':
+                            num1 = getRandomFloat(-100, 500, 2);
+                            num2 = getRandomFloat(-100, 500, 2);
+                            answer = parseFloat((num1 + num2).toFixed(2));
+                            break;
+                        case '-':
+                            num1 = getRandomFloat(100, 500, 2);
+                            num2 = getRandomFloat(100, 500, 2);
+                            answer = parseFloat((num1 - num2).toFixed(2));
+                            break;
+                        case '*':
+                            num1 = getRandomFloat(5, 25, 1);
+                            num2 = getRandomFloat(5, 25, 1);
+                            answer = parseFloat((num1 * num2).toFixed(2));
+                            break;
+                        case '/':
+                            answer = getRandomInt(10, 50);
+                            num2 = getRandomInt(10, 30);
+                            num1 = answer * num2;
+                            break;
+                    }
+                    question = `${num1} ${operation} ${num2} = ?`;
+                    break;
+            }
+            return { question, answer };
+        }
+
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        function getRandomFloat(min, max, decimals) {
+            const str = (Math.random() * (max - min) + min).toFixed(decimals);
+            return parseFloat(str);
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
