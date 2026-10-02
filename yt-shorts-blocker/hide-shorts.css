@@ -1,0 +1,34 @@
+/* Shorts shelves on home, search, subscriptions, watch sidebar */
+ytd-reel-shelf-renderer,
+ytd-rich-shelf-renderer[is-shorts],
+ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model),
+grid-shelf-view-model:has(ytm-shorts-lockup-view-model),
+ytm-shorts-lockup-view-model,
+ytm-shorts-lockup-view-model-v2,
+ytd-reel-item-renderer,
+
+/* Individual shorts mixed into normal video lists */
+ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+ytd-video-renderer:has(a[href^="/shorts/"]),
+ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+yt-lockup-view-model:has(a[href^="/shorts/"]),
+
+/* "Shorts" entry in the left sidebar (full + mini) */
+ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+ytd-guide-entry-renderer:has(a#endpoint[title="Shorts"]),
+ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+ytd-mini-guide-entry-renderer[aria-label="Shorts"],
+
+/* "Shorts" tab on channel pages */
+yt-tab-shape[tab-title="Shorts"],
+
+/* Mobile site (m.youtube.com) */
+ytm-reel-shelf-renderer,
+ytm-shorts-lockup-view-model,
+ytm-rich-item-renderer:has(a[href^="/shorts/"]),
+ytm-video-with-context-renderer:has(a[href^="/shorts/"]),
+ytm-pivot-bar-item-renderer:has(.pivot-shorts) {
+  display: none !important;
+}

@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "YT Shorts Blocker",
+  "version": "1.0.0",
+  "description": "Blocks YouTube Shorts only. The rest of YouTube keeps working.",
+  "permissions": ["declarativeNetRequest"],
+  "host_permissions": ["*://*.youtube.com/*"],
+  "declarative_net_request": {
+    "rule_resources": [
+      { "id": "shorts_redirect", "enabled": true, "path": "rules.json" }
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "css": ["hide-shorts.css"],
+      "js": ["block-shorts.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
